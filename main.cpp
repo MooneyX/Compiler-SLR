@@ -109,7 +109,7 @@ ProSet Closure(ProSet now) {
         int y = workList.front().rightId;
         int z = workList.front().pointPos;
         workList.pop();
-        cout << "???" << char(x + 'A') << " " << y << " " << z << " " << Right[y][z] << "???\n";
+        // cout << "???" << char(x + 'A') << " " << y << " " << z << " " << Right[y][z] << "???\n";
         if(Right[y][z] >= 'A' && Right[y][z] <= 'Z') {
             int id = Right[y][z] - 'A';
             for(auto j : nonT[id]) {
@@ -121,7 +121,7 @@ ProSet Closure(ProSet now) {
 					}
 				}
 				if(t) {
-                    cout << char(id + 'A') << "->" << Right[j] << "!!!\n";
+                    // cout << char(id + 'A') << "->" << Right[j] << "!!!\n";
                 	workList.push(Project(id, j, 0));
                     now.insert(Project(id, j, 0));
                 }
@@ -210,7 +210,7 @@ int main() {
     sort(symbol.begin(), symbol.end(), cmp);
     symbol.erase(unique(symbol.begin(), symbol.end()), symbol.end());
 
-    cout << "unique ok\n";
+    // cout << "unique ok\n";
     // ProSet t;
     // t.insert(Project('S' - 'A', 0, 0));
     // t = Closure(t);
@@ -220,7 +220,7 @@ int main() {
     ProSet temp;
     temp.insert(Project('S' - 'A', 0, 0));
     State start = Closure(ProSet(temp));
-    cout << "start ok\n";
+    // cout << "start ok\n";
     int cnt = 1;
     state.push_back(start);
     for(int i = 0; i < state.size(); ++i) {
@@ -252,6 +252,9 @@ int main() {
         cout << "state[" << i << "]:\n";
         state[i].Display();
         for(auto j : symbol) {
+            if(state[i].nex[j] == -2) {
+                cout << "\t-" << j << ">accept\n";
+            }
             if(state[i].nex[j] != -1) {
                 cout << "\t-" << j << '>' << state[i].nex[j] << "\n";
             }
