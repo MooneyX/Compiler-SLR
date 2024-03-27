@@ -109,7 +109,6 @@ ProSet Closure(ProSet now) {
         int y = workList.front().rightId;
         int z = workList.front().pointPos;
         workList.pop();
-        // cout << "???" << char(x + 'A') << " " << y << " " << z << " " << Right[y][z] << "???\n";
         if(Right[y][z] >= 'A' && Right[y][z] <= 'Z') {
             int id = Right[y][z] - 'A';
             for(auto j : nonT[id]) {
@@ -121,7 +120,6 @@ ProSet Closure(ProSet now) {
 					}
 				}
 				if(t) {
-                    // cout << char(id + 'A') << "->" << Right[j] << "!!!\n";
                 	workList.push(Project(id, j, 0));
                     now.insert(Project(id, j, 0));
                 }
@@ -199,33 +197,21 @@ char symbolStack[510];
 int symbolTop;
 
 int main() {
-	string s; 
+	string s;
     while(cin >> (s)) {
         if(s == "!") {
             break;
         }
         parse_prod(s);
     }
-    // cout << "input ok\n";
     sort(symbol.begin(), symbol.end(), cmp);
     symbol.erase(unique(symbol.begin(), symbol.end()), symbol.end());
-
-    // cout << "unique ok\n";
-    // ProSet t;
-    // t.insert(Project('S' - 'A', 0, 0));
-    // t = Closure(t);
-    // for(auto i : t) {
-    //     i.Display();
-    // }
     ProSet temp;
     temp.insert(Project('S' - 'A', 0, 0));
     State start = Closure(ProSet(temp));
-    // cout << "start ok\n";
     int cnt = 1;
     state.push_back(start);
     for(int i = 0; i < state.size(); ++i) {
-        // cout << "u:\n";
-        // state[i].Display();
         for(auto j : symbol) {
             ProSet v = Closure(Move(state[i].ps, j));
             if(v.size() == 0) {
@@ -236,15 +222,11 @@ int main() {
                 continue;
             }
             int id = getStateId(v);
-            // cout << "v:\n";
-            // State(v).Display();
-            // cout << id << "!!!\n";
             if(id == -1) {
                 state.push_back(State(v));
                 id = cnt++;
             }
             state[i].nex[j] = id;
-            // cout << (char)i << u.nex[i] << "\n";
         }
     }
 
@@ -304,45 +286,20 @@ int main() {
     tokens += '$';
     int pos = 0;
     while(1) {
-        // cout << "pos = " << pos << "\n";
         char t = tokens[pos];
-        // cout << "t = " << t << "\n";
         State u = state[stateStack[stateTop]];
-        // for(int i = 1; i <= stateTop; ++i) {
-        //     cout << stateStack[i] << " ";
-        // }
-        // cout << '\n';
-        // for(int i = 1; i <= symbolTop; ++i) {
-        //     cout << symbolStack[i] << " ";
-        // }
-        // cout << '\n';
-        // cout << "u = status[" << stateStack[stateTop] << "], t = " << t << ", nex = " << u.nex[t] << "\n";
         if(u.reduce.size()) {
             int rightId = u.reduce[0];
-            // cout << "rightId = " << rightId << " size = " << Right[rightId].size() << "???\n";
             symbolTop -= Right[rightId].size();
             stateTop -= Right[rightId].size();
-            // cout << "stacks : \n";
-            // for(int i = 1; i <= stateTop; ++i) {
-            //     cout << stateStack[i] << " ";
-            // }
-            // cout << '\n';
-            // for(int i = 1; i <= symbolTop; ++i) {
-            //     cout << symbolStack[i] << " ";
-            // }
-            // cout << "\n";
-            // cout << "left = " << (char)right2Left[rightId] << '\n';
             symbolStack[++symbolTop] = right2Left[rightId];
-            // cout << "stateTop = " << stateTop << "stateStac"
             stateStack[++stateTop] = state[stateStack[stateTop]].nex[right2Left[rightId]];
-            // cout << '\n';
         }
         else if(u.nex[t] == -2) {
             cout << "accept!\n";
             return 0;
         }
         else if(u.nex[t] != -1) {//移进
-            // puts("shift");
             symbolStack[++symbolTop] = t;
             stateStack[++stateTop] = u.nex[t];
             pos++;
