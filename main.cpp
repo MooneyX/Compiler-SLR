@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#define ASCIINUM 128
 using namespace std;
 
 //用string表示右部
@@ -9,7 +10,7 @@ using namespace std;
 vector<string> Right;
 vector<int> right2Left;//右部编号对应的非终结符
 
-vector<int> nonT[30];
+vector<int> nonT[ASCIINUM];
 
 vector<char> symbol;
 
@@ -23,7 +24,7 @@ struct Project {
         pointPos = P;
     }
     void Display() {
-        cout << char(leftId + 'A') << "->";
+        cout << char(leftId) << "->";
         for(int j = 0; j <= Right[rightId].size(); ++j) {
             if(j == pointPos) {
                 cout << '#';
@@ -52,6 +53,8 @@ typedef set<Project> ProSet;
 
 //项集需要用set<Project>表示
 //一个节点包含一个项集和出边的信息
+
+
 struct State {
 	ProSet ps;//project set 节点里面的项集
 	int nex[300];//nex['a']表示当前状态接收符号a之后到达的状态 
@@ -89,7 +92,7 @@ void parse_prod(string s) {
         return;
     }
     symbol.push_back(s[0]);
-    int id = s[0] - 'A';
+    int id = s[0];
     Right.push_back(s.substr(3, n - 3));
     right2Left.push_back(s[0]);
     nonT[id].push_back(Right.size() - 1);
@@ -109,9 +112,8 @@ ProSet Closure(ProSet now) {
         int y = workList.front().rightId;
         int z = workList.front().pointPos;
         workList.pop();
-        // cout << "???" << char(x + 'A') << " " << y << " " << z << " " << Right[y][z] << "???\n";
         if(Right[y][z] >= 'A' && Right[y][z] <= 'Z') {
-            int id = Right[y][z] - 'A';
+            int id = Right[y][z];
             for(auto j : nonT[id]) {
             	bool t = 1;
             	for(auto k : now) {
@@ -121,7 +123,6 @@ ProSet Closure(ProSet now) {
 					}
 				}
 				if(t) {
-                    // cout << char(id + 'A') << "->" << Right[j] << "!!!\n";
                 	workList.push(Project(id, j, 0));
                     now.insert(Project(id, j, 0));
                 }
@@ -199,33 +200,21 @@ char symbolStack[510];
 int symbolTop;
 
 int main() {
-	string s; 
+	string s;
     while(cin >> (s)) {
         if(s == "!") {
             break;
         }
         parse_prod(s);
     }
-    // cout << "input ok\n";
     sort(symbol.begin(), symbol.end(), cmp);
     symbol.erase(unique(symbol.begin(), symbol.end()), symbol.end());
-
-    // cout << "unique ok\n";
-    // ProSet t;
-    // t.insert(Project('S' - 'A', 0, 0));
-    // t = Closure(t);
-    // for(auto i : t) {
-    //     i.Display();
-    // }
     ProSet temp;
-    temp.insert(Project('S' - 'A', 0, 0));
+    temp.insert(Project('S', 0, 0));
     State start = Closure(ProSet(temp));
-    // cout << "start ok\n";
     int cnt = 1;
     state.push_back(start);
     for(int i = 0; i < state.size(); ++i) {
-        // cout << "u:\n";
-        // state[i].Display();
         for(auto j : symbol) {
             ProSet v = Closure(Move(state[i].ps, j));
             if(v.size() == 0) {
@@ -236,15 +225,11 @@ int main() {
                 continue;
             }
             int id = getStateId(v);
-            // cout << "v:\n";
-            // State(v).Display();
-            // cout << id << "!!!\n";
             if(id == -1) {
                 state.push_back(State(v));
                 id = cnt++;
             }
             state[i].nex[j] = id;
-            // cout << (char)i << u.nex[i] << "\n";
         }
     }
 
@@ -271,7 +256,6 @@ int main() {
         state[i].getReduce();
         cout << i << '\t';
         for(auto j : symbol) {
-            // cout << '?' << j << '?';
             if(!Letter(j)) {
                 bool flag = 0;
                 if(state[i].nex[j] == -2) {
@@ -304,45 +288,20 @@ int main() {
     tokens += '$';
     int pos = 0;
     while(1) {
-        // cout << "pos = " << pos << "\n";
         char t = tokens[pos];
-        // cout << "t = " << t << "\n";
         State u = state[stateStack[stateTop]];
-        // for(int i = 1; i <= stateTop; ++i) {
-        //     cout << stateStack[i] << " ";
-        // }
-        // cout << '\n';
-        // for(int i = 1; i <= symbolTop; ++i) {
-        //     cout << symbolStack[i] << " ";
-        // }
-        // cout << '\n';
-        // cout << "u = status[" << stateStack[stateTop] << "], t = " << t << ", nex = " << u.nex[t] << "\n";
         if(u.reduce.size()) {
             int rightId = u.reduce[0];
-            // cout << "rightId = " << rightId << " size = " << Right[rightId].size() << "???\n";
             symbolTop -= Right[rightId].size();
             stateTop -= Right[rightId].size();
-            // cout << "stacks : \n";
-            // for(int i = 1; i <= stateTop; ++i) {
-            //     cout << stateStack[i] << " ";
-            // }
-            // cout << '\n';
-            // for(int i = 1; i <= symbolTop; ++i) {
-            //     cout << symbolStack[i] << " ";
-            // }
-            // cout << "\n";
-            // cout << "left = " << (char)right2Left[rightId] << '\n';
             symbolStack[++symbolTop] = right2Left[rightId];
-            // cout << "stateTop = " << stateTop << "stateStac"
             stateStack[++stateTop] = state[stateStack[stateTop]].nex[right2Left[rightId]];
-            // cout << '\n';
         }
         else if(u.nex[t] == -2) {
             cout << "accept!\n";
             return 0;
         }
         else if(u.nex[t] != -1) {//移进
-            // puts("shift");
             symbolStack[++symbolTop] = t;
             stateStack[++stateTop] = u.nex[t];
             pos++;
