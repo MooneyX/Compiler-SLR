@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#define ASCIINUM 128
 using namespace std;
 
 //用string表示右部
@@ -9,7 +10,7 @@ using namespace std;
 vector<string> Right;
 vector<int> right2Left;//右部编号对应的非终结符
 
-vector<int> nonT[30];
+vector<int> nonT[ASCIINUM];
 
 vector<char> symbol;
 
@@ -23,7 +24,7 @@ struct Project {
         pointPos = P;
     }
     void Display() {
-        cout << char(leftId + 'A') << "->";
+        cout << char(leftId) << "->";
         for(int j = 0; j <= Right[rightId].size(); ++j) {
             if(j == pointPos) {
                 cout << '#';
@@ -52,6 +53,8 @@ typedef set<Project> ProSet;
 
 //项集需要用set<Project>表示
 //一个节点包含一个项集和出边的信息
+
+
 struct State {
 	ProSet ps;//project set 节点里面的项集
 	int nex[300];//nex['a']表示当前状态接收符号a之后到达的状态 
@@ -89,7 +92,7 @@ void parse_prod(string s) {
         return;
     }
     symbol.push_back(s[0]);
-    int id = s[0] - 'A';
+    int id = s[0];
     Right.push_back(s.substr(3, n - 3));
     right2Left.push_back(s[0]);
     nonT[id].push_back(Right.size() - 1);
@@ -110,7 +113,7 @@ ProSet Closure(ProSet now) {
         int z = workList.front().pointPos;
         workList.pop();
         if(Right[y][z] >= 'A' && Right[y][z] <= 'Z') {
-            int id = Right[y][z] - 'A';
+            int id = Right[y][z];
             for(auto j : nonT[id]) {
             	bool t = 1;
             	for(auto k : now) {
@@ -207,7 +210,7 @@ int main() {
     sort(symbol.begin(), symbol.end(), cmp);
     symbol.erase(unique(symbol.begin(), symbol.end()), symbol.end());
     ProSet temp;
-    temp.insert(Project('S' - 'A', 0, 0));
+    temp.insert(Project('S', 0, 0));
     State start = Closure(ProSet(temp));
     int cnt = 1;
     state.push_back(start);
@@ -253,7 +256,6 @@ int main() {
         state[i].getReduce();
         cout << i << '\t';
         for(auto j : symbol) {
-            // cout << '?' << j << '?';
             if(!Letter(j)) {
                 bool flag = 0;
                 if(state[i].nex[j] == -2) {
