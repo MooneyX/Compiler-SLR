@@ -1,5 +1,8 @@
 #include <bits/stdc++.h>
 #define ASCIINUM 128
+#define SPRIME 1 //用char 1表示增广文法的起始符号
+//不能用char 0 在求Closure时, 当pointPos在末尾的时候, 字符串的值为默认的0, 会被误判为后面有一个S'
+#define DEBUG 1
 using namespace std;
 
 //用string表示右部
@@ -24,7 +27,12 @@ struct Project {
         pointPos = P;
     }
     void Display() {
-        cout << char(leftId) << "->";
+        if(leftId == SPRIME) {
+            cout << "S' -> ";
+        }
+        else {
+            cout << char(leftId) << " -> ";
+        }
         for(int j = 0; j <= Right[rightId].size(); ++j) {
             if(j == pointPos) {
                 cout << '#';
@@ -32,6 +40,9 @@ struct Project {
             cout << Right[rightId][j];
         }
         cout << "\n";
+        if(DEBUG) {
+            cout << "pointPos = " << pointPos << "\n";
+        }
     }
 
     bool friend operator < (Project x, Project y) {
@@ -57,7 +68,7 @@ typedef set<Project> ProSet;
 
 struct State {
 	ProSet ps;//project set 节点里面的项集
-	int nex[300];//nex['a']表示当前状态接收符号a之后到达的状态 
+	int nex[ASCIINUM];//nex['a']表示当前状态接收符号a之后到达的状态 
     vector<int> reduce;//可以归约的产生式编号
 
     State() {
@@ -85,7 +96,7 @@ struct State {
 }; 
 vector<State> state;
 
-void parse_prod(string s) {
+void ParseProd(string s) {
     int n = s.length();
     if(s[0] < 'A' || s[0] > 'Z' || s[1] != '-' || s[2] != '>') {
         puts("产生式不合法!");
@@ -101,6 +112,29 @@ void parse_prod(string s) {
     }
 }
 
+bool ParseFirstProd(string s) {
+    int n = s.length();
+    if(s[0] < 'A' || s[0] > 'Z' || s[1] != '-' || s[2] != '>') {
+        puts("产生式不合法!");
+        return 0;
+    }
+    symbol.push_back(SPRIME);
+    int id = SPRIME;
+    string temp = "";
+    temp += s[0];
+    temp += '$';
+    Right.push_back(temp);
+    right2Left.push_back(SPRIME);
+    nonT[id].push_back(Right.size() - 1);
+    symbol.push_back('$');
+    ParseProd(s);
+    return 1;
+}
+
+
+bool Nonterminal(char x) {
+    return x == SPRIME || (x >= 'A' && x <= 'Z');
+}
 
 ProSet Closure(ProSet now) {
     queue<Project> workList;
@@ -112,7 +146,7 @@ ProSet Closure(ProSet now) {
         int y = workList.front().rightId;
         int z = workList.front().pointPos;
         workList.pop();
-        if(Right[y][z] >= 'A' && Right[y][z] <= 'Z') {
+        if(Nonterminal(Right[y][z])) {
             int id = Right[y][z];
             for(auto j : nonT[id]) {
             	bool t = 1;
@@ -168,26 +202,22 @@ void output(bool &flag, string s) {
     flag = 1;
 }
 
-bool Letter(char x) {
-    return x >= 'A' && x <= 'Z';
-}
-
 bool cmp(char x, char y) {
     if(x == '$') {
-        return Letter(y);
+        return Nonterminal(y);
     }
     if(y == '$') {
-        return !Letter(x);
+        return !Nonterminal(x);
     }
-    if(Letter(x)) {
-        if(Letter(y)) {
+    if(Nonterminal(x)) {
+        if(Nonterminal(y)) {
             return x < y;
         }
         else {
             return 0;
         }
     }
-    if(Letter(y)) {
+    if(Nonterminal(y)) {
         return 1;
     }
     return x < y;
@@ -201,21 +231,40 @@ int symbolTop;
 
 int main() {
 	string s;
-    while(cin >> (s)) {
+    do {
+        cin >> s;
+    }while(!ParseFirstProd(s));
+    while(cin >> s) {
         if(s == "!") {
             break;
         }
-        parse_prod(s);
+        ParseProd(s);
+    }
+    if(DEBUG) {
+        cout << "增广后的文法: \n";
+        for(int i = 0; i < Right.size(); ++i) {
+            char L = right2Left[i];
+            if(L == SPRIME) {
+                cout << "S' -> ";
+            }
+            else {
+                cout << L << " -> ";
+            }
+            cout << Right[i] << "\n";
+        }
     }
     sort(symbol.begin(), symbol.end(), cmp);
     symbol.erase(unique(symbol.begin(), symbol.end()), symbol.end());
     ProSet temp;
-    temp.insert(Project('S', 0, 0));
+    temp.insert(Project(SPRIME, 0, 0));
     State start = Closure(ProSet(temp));
     int cnt = 1;
     state.push_back(start);
     for(int i = 0; i < state.size(); ++i) {
         for(auto j : symbol) {
+            if(j == SPRIME) {
+                continue;
+            }
             ProSet v = Closure(Move(state[i].ps, j));
             if(v.size() == 0) {
                 continue;
@@ -237,8 +286,12 @@ int main() {
         cout << "state[" << i << "]:\n";
         state[i].Display();
         for(auto j : symbol) {
+            if(j == SPRIME) {
+                continue;
+            }
             if(state[i].nex[j] == -2) {
                 cout << "\t-" << j << ">accept\n";
+                continue;
             }
             if(state[i].nex[j] != -1) {
                 cout << "\t-" << j << '>' << state[i].nex[j] << "\n";
@@ -249,14 +302,22 @@ int main() {
 
     cout << '\t';
     for(auto i : symbol) {
-        cout << i << '\t';
+        if(i == SPRIME) {
+            cout << "S'\t";
+        }
+        else {
+            cout << i << '\t';
+        }
     }
     cout << '\n';
     for(int i = 0; i < state.size(); ++i) {
         state[i].getReduce();
         cout << i << '\t';
         for(auto j : symbol) {
-            if(!Letter(j)) {
+            if(j == SPRIME) {
+                continue;
+            }
+            if(!Nonterminal(j)) {
                 bool flag = 0;
                 if(state[i].nex[j] == -2) {
                     cout << "accept";
@@ -316,15 +377,15 @@ int main() {
 } 
 
 /*
-S->E$
 E->E+T
 E->T
 T->T*F
 T->F
 F->n
+!
 */
 /*
-S->A$
-A->xxT
+S->xxT
 T->y
+!
 */
